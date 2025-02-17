@@ -1,5 +1,5 @@
 from datetime import datetime
-
+################################################
 # Classe Base Comum
 class EntidadeRestaurante:
     def __init__(self,id,nome):
