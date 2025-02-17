@@ -1,3 +1,4 @@
+git commit -m "codigo iniciado "
 class Pessoa:
     def __init__(self, nome, telefone):
         self.nome = nome
