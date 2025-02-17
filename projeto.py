@@ -1,0 +1,134 @@
+
+class Pessoa:
+    def __init__(self, nome, telefone):
+        self.nome = nome
+        self.telefone = telefone
+
+    def get_info(self):
+        return f"{self.nome} - {self.telefone}"
+
+
+class Cliente(Pessoa):
+    pass
+
+
+class Funcionario(Pessoa):
+    def __init__(self, nome, telefone, cargo):
+        super().__init__(nome, telefone)
+        self.cargo = cargo
+
+
+class Produto:
+    def __init__(self, nome, preco):
+        self.nome = nome
+        self.preco = preco
+
+    def get_preco(self):
+        return self.preco
+
+    def get_nome(self):
+        return self.nome
+
+
+class ItemPedido:
+    def __init__(self, produto, quantidade):
+        self.produto = produto
+        self.quantidade = quantidade
+
+    def calcular_subtotal(self):
+        return self.produto.get_preco() * self.quantidade
+
+
+class Pedido:
+    def __init__(self, cliente):
+        self.cliente = cliente
+        self.itens = []
+
+    def adicionar_item(self, produto, quantidade):
+        self.itens.append(ItemPedido(produto, quantidade))
+
+    def remover_item(self, nome_produto):
+        self.itens = [item for item in self.itens if item.produto.get_nome() != nome_produto]
+
+    def calcular_total(self):
+        return sum(item.calcular_subtotal() for item in self.itens)
+
+    def listar_itens(self):
+        return [f"{item.produto.get_nome()} - {item.quantidade} unidades - Subtotal: R$ {item.calcular_subtotal():.2f}" for item in self.itens]
+
+
+class Reserva:
+    def __init__(self, cliente, data_hora):
+        self.cliente = cliente
+        self.data_hora = data_hora
+        self.status = "PENDENTE"
+
+    def confirmar_reserva(self):
+        self.status = "CONFIRMADA"
+
+    def cancelar_reserva(self):
+        self.status = "CANCELADA"
+
+    def exibir_reserva(self):
+        return f"Reserva para {self.cliente.get_info()} em {self.data_hora} | Status: {self.status}"
+
+
+# Funções para adicionar e remover objetos no sistema
+clientes = []
+funcionarios = []
+produtos = []
+pedidos = []
+reservas = []
+
+def adicionar_cliente(nome, telefone):
+    cliente = Cliente(nome, telefone)
+    clientes.append(cliente)
+
+def remover_cliente(nome):
+    global clientes
+    clientes = [cliente for cliente in clientes if cliente.nome != nome]
+
+def adicionar_funcionario(nome, telefone, cargo):
+    funcionario = Funcionario(nome, telefone, cargo)
+    funcionarios.append(funcionario)
+
+def remover_funcionario(nome):
+    global funcionarios
+    funcionarios = [funcionario for funcionario in funcionarios if funcionario.nome != nome]
+
+def adicionar_produto(nome, preco):
+    produto = Produto(nome, preco)
+    produtos.append(produto)
+
+def remover_produto(nome):
+    global produtos
+    produtos = [produto for produto in produtos if produto.nome != nome]
+
+def criar_pedido(cliente_nome):
+    cliente = next((c for c in clientes if c.nome == cliente_nome), None)
+    if cliente:
+        pedido = Pedido(cliente)
+        pedidos.append(pedido)
+        return pedido
+    return None
+
+def adicionar_item_pedido(pedido, nome_produto, quantidade):
+    produto = next((p for p in produtos if p.nome == nome_produto), None)
+    if produto:
+        pedido.adicionar_item(produto, quantidade)
+
+def remover_item_pedido(pedido, nome_produto):
+    pedido.remover_item(nome_produto)
+
+def criar_reserva(cliente_nome, data_hora):
+    cliente = next((c for c in clientes if c.nome == cliente_nome), None)
+    if cliente:
+        reserva = Reserva(cliente, data_hora)
+        reservas.append(reserva)
+        return reserva
+    return None
+
+def remover_reserva(cliente_nome):
+    global reservas
+    reservas = [reserva for reserva in reservas if reserva.cliente.nome != cliente_nome]
+
