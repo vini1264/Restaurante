@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 
 # Importação do código principal do restaurante
-from restaurante import Restaurante, RestauranteController, Produto, Cliente, Funcionario, Mesa, Cardapio, Pedido, Reserva, Promocao, Avaliacao
+from projeto import Restaurante, RestauranteController, Produto, Cliente, Funcionario, Mesa, Cardapio, Pedido, Reserva, Promocao, Avaliacao
 
 # Criação do objeto Restaurante central
 restaurante = Restaurante(1, "Restaurante Exemplo", "Rua Principal, 123")
