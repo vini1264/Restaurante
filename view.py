@@ -294,33 +294,90 @@ elif st.session_state["option"] == "Avaliações":
             st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}: {avaliacao.comentario}")
 
 ######################################
-# Exibição de Promoções
+# Lógica de navegação - Promoções
 ######################################
-elif st.session_state["option"] == "Promoções":
+if st.session_state["option"] == "Promoções":
+    st.subheader("Promoções")
+
+    # Formulário para cadastrar uma promoção
+    with st.form("cadastro_promocao"):
+        st.subheader("Cadastrar Nova Promoção")
+        descricao = st.text_input("Descrição da Promoção")
+        desconto = st.number_input("Desconto (%)", min_value=1, max_value=100, step=1)
+        data_validade = st.date_input("Data de Validade")
+        submitted = st.form_submit_button("Cadastrar Promoção")
+        if submitted:
+            if descricao and desconto:
+                try:
+                    promocao = Promocao(descricao, desconto, data_validade)
+                    restaurante.promocoes.append(promocao)
+                    st.success(f"Promoção '{descricao}' cadastrada com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao cadastrar promoção: {e}")
+            else:
+                st.error("Preencha todos os campos corretamente.")
+
+    # Lista promoções cadastradas
     st.subheader("Promoções Ativas")
-    if restaurante.promocoes:
-        for promo in restaurante.promocoes:
-            st.write(f"Promoção: {promo.descricao}")
-            st.write(f"Desconto: {promo.desconto}%")
-            st.write(f"Válido até: {promo.dataValidade}")
-            produtos = ', '.join([prod.nome for prod in promo.listar_produtos()])
-            st.write(f"Produtos em promoção: {produtos}")
-            st.write("---")
-    else:
-        st.write("Nenhuma promoção ativa no momento.")
+    for promo in restaurante.promocoes:
+        st.write(f"{promo.descricao} - Desconto: {promo.desconto}% - Validade: {promo.dataValidade}")
 
 ######################################
-# Exibição de Avaliações
+# Lógica de navegação - Avaliações
 ######################################
-elif st.session_state["option"] == "Avaliações":
+if st.session_state["option"] == "Avaliações":
+    st.subheader("Avaliações")
+
+    # Formulário para cadastrar uma avaliação
+    with st.form("cadastro_avaliacao"):
+        st.subheader("Cadastrar Nova Avaliação")
+        id_cliente = st.number_input("ID do Cliente", min_value=1, step=1)
+        nota = st.slider("Nota (1-5)", min_value=1, max_value=5, step=1)
+        comentario = st.text_area("Comentário")
+        submitted = st.form_submit_button("Enviar Avaliação")
+        if submitted:
+            cliente = next((c for c in restaurante.clientes if c.id == id_cliente), None)
+            if cliente:
+                try:
+                    avaliacao = Avaliacao(cliente, nota, comentario)
+                    restaurante.avaliacoes.append(avaliacao)
+                    st.success("Avaliação registrada com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao cadastrar avaliação: {e}")
+            else:
+                st.error("Cliente não encontrado. Verifique o ID.")
+
+    # Lista avaliações cadastradas
     st.subheader("Avaliações dos Clientes")
-    if restaurante.avaliacoes:
-        for avaliacao in restaurante.avaliacoes:
-            st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}")
-            st.write(f"Comentário: {avaliacao.comentario}")
-            st.write("---")
-    else:
-        st.write("Ainda não há avaliações cadastradas.")
+    for avaliacao in restaurante.avaliacoes:
+        st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}: {avaliacao.comentario}")
+
+######################################
+# Lógica de navegação - Reservas
+######################################
+if st.session_state["option"] == "Reservas":
+    st.subheader("Reservas")
+
+    # Formulário para cadastrar uma reserva
+    with st.form("cadastro_reserva"):
+        st.subheader("Fazer Nova Reserva")
+        id_cliente = st.number_input("ID do Cliente", min_value=1, step=1)
+        id_mesa = st.number_input("Número da Mesa", min_value=1, step=1)
+        data_reserva = st.date_input("Data da Reserva")
+        hora_reserva = st.time_input("Hora da Reserva")
+        submitted = st.form_submit_button("Reservar")
+        if submitted:
+            cliente = next((c for c in restaurante.clientes if c.id == id_cliente), None)
+            mesa = next((m for m in restaurante.mesas if m.numero == id_mesa), None)
+            if cliente and mesa:
+                try:
+                    reserva = Reserva(cliente, mesa, datetime.combine(data_reserva, hora_reserva))
+                    restaurante.reservas.append(reserva)
+                    st.success("Reserva realizada com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao fazer reserva: {e}")
+            else:
+                st.error("Cliente ou mesa não encontrados. Verifique os IDs.")
 
 ######################################
 # Rodapé
