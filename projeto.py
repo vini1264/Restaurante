@@ -32,7 +32,7 @@ class Funcionario(EntidadeRestaurante):
 class Produto:
     def __init__(self,nome,preco,tipo):
         self.nome = nome
-        self.prec o= preco
+        self.preco = preco
         self.tipo = tipo
 
     def get_preco(self):
