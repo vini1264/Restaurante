@@ -40,8 +40,8 @@ if not restaurante.mesas:
 
 if restaurante.cardapio is None:
     cardapio = controller.definir_cardapio(1, "Cardápio do Restaurante Exemplo")
-    produto1 = Produto("Pizza", 35.0)
-    produto2 = Produto("Refrigerante", 5.0)
+    produto1 = Produto("Pizza", 35.0, "Alimento")
+    produto2 = Produto("Refrigerante", 5.0, "Bebida")
     cardapio.adicionar_produto(produto1)
     cardapio.adicionar_produto(produto2)
 
@@ -206,7 +206,7 @@ elif st.session_state["option"] == "Cardápio":
         st.subheader("Adicionar Novo Produto")
         nome_produto = st.text_input("Nome do Produto")
         preco_produto = st.number_input("Preço do Produto", min_value=0.0, step=0.01)
-        tipo_produto = st.selectbox("Tipo do Produto", ["Comida", "Bebida"])
+        tipo_produto = st.selectbox("Tipo do Produto", ["Alimento", "Bebida"])
         submitted = st.form_submit_button("Adicionar")
         if submitted:
             if nome_produto and preco_produto:
@@ -221,11 +221,11 @@ elif st.session_state["option"] == "Cardápio":
     # Lista os produtos cadastrados no cardápio
     st.subheader("Produtos no Cardápio")
     if restaurante.cardapio:
-        comidas = [prod for prod in restaurante.cardapio.listar_produtos() if prod.get_tipo() == "Comida"]
+        alimentos = [prod for prod in restaurante.cardapio.listar_produtos() if prod.get_tipo() == "Alimento"]
         bebidas = [prod for prod in restaurante.cardapio.listar_produtos() if prod.get_tipo() == "Bebida"]
 
-        st.write("**Comidas**")
-        for comida in comidas:
+        st.write("**Alimentos**")
+        for comida in alimentos:
             st.write(f"{comida.get_nome()} - R$ {comida.get_preco():.2f}")
 
         st.write("**Bebidas**")
@@ -255,43 +255,6 @@ elif st.session_state["option"] == "Pedidos":
         st.write(f"{pedido.nome} - Total: R$ {pedido.calcular_total():.2f}")
         for item in pedido.listar_itens():
             st.write(f"  - {item}")
-
-elif st.session_state["option"] == "Reservas":
-    st.subheader("Reservas")
-
-    # Formulário para criar uma reserva em uma mesa
-    with st.form("criar_reserva"):
-        st.subheader("Criar Reserva")
-        id_reserva = st.number_input("ID da Reserva", min_value=1, step=1)
-        id_cliente_reserva = st.number_input("ID do Cliente", min_value=1, step=1)
-        numero_mesa_reserva = st.number_input("Número da Mesa para a Reserva", min_value=1, step=1)
-        data_hora_reserva = st.date_input("Data e Hora da Reserva")
-        submitted = st.form_submit_button("Criar Reserva")
-        if submitted:
-            try:
-                cliente = next(c for c in restaurante.clientes if c.id == id_cliente_reserva)
-                controller.criar_reserva(id_reserva, cliente, datetime.combine(data_hora_reserva, datetime.min.time()), numero_mesa_reserva)
-                st.success(f"Reserva {id_reserva} criada com sucesso na mesa {numero_mesa_reserva}!")
-            except Exception as e:
-                st.error(f"Ocorreu um erro ao criar a reserva: {e}")
-
-    # Lista as reservas cadastradas
-    for reserva in restaurante.reservas:
-        st.write(reserva.exibir_reserva())
-
-elif st.session_state["option"] == "Promoções":
-    st.subheader("Promoções")
-    if hasattr(restaurante, 'promocoes'):
-        for promo in restaurante.promocoes:
-            st.write(f"{promo.descricao} - Desconto: {promo.desconto}% - Validade: {promo.dataValidade}")
-            for prod in promo.listar_produtos():
-                st.write(f"  - {prod}")
-
-elif st.session_state["option"] == "Avaliações":
-    st.subheader("Avaliações")
-    if hasattr(restaurante, 'avaliacoes'):
-        for avaliacao in restaurante.avaliacoes:
-            st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}: {avaliacao.comentario}")
 
 ######################################
 # Lógica de navegação - Promoções
