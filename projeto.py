@@ -1,5 +1,4 @@
 from datetime import datetime
-import streamlit as st
 #MODEL
 ################################################
 # Classe Base Comum
@@ -149,10 +148,12 @@ class RestauranteController:
     def __init__(self, restaurante):
         self.restaurante=restaurante
 
-    def cadastrar_cliente(self, id, nome, telefone):
-        cliente=Cliente(id, nome, telefone)
-        self.restaurante.cadastrar_cliente(cliente)
-        return cliente
+    def cadastrar_cliente(self, id_cliente, nome_cliente, telefone_cliente):
+        try:
+            cliente=Cliente(id_cliente, nome_cliente, telefone_cliente)
+            self.restaurante.clientes.append(cliente)
+        except Exception as e:
+            raise e
 
     def cadastrar_funcionario(self, id, nome, telefone, cargo, salario):
         funcionario=Funcionario(id, nome, telefone, cargo, salario)
@@ -212,92 +213,3 @@ if restaurante.cardapio is None:
     produto2=Produto("Refrigerante", 5.0)
     cardapio.adicionar_produto(produto1)
     cardapio.adicionar_produto(produto2)
-
-# --- Interface com Streamlit (View) ---
-
-st.title("Sistema de Restaurante")
-
-# Menu lateral para selecionar a funcionalidade
-option=st.sidebar.selectbox("Selecione uma opção:",
-                              ["Home", "Clientes", "Funcionários", "Mesas", "Cardápio",
-                               "Pedidos", "Reservas", "Promoções", "Avaliações"])
-
-if option=="Home":
-    st.write("Bem-vindo ao sistema de restaurante!")
-    st.write("Utilize o menu lateral para navegar entre as funcionalidades.")
-
-elif option=="Clientes":
-    st.subheader("Clientes Cadastrados")
-    if restaurante.clientes:
-        for cliente in restaurante.clientes:
-            st.write(cliente.get_info())
-    else:
-        st.write("Nenhum cliente cadastrado.")
-
-elif option=="Funcionários":
-    st.subheader("Funcionários")
-    if restaurante.funcionarios:
-        for f in restaurante.funcionarios:
-            st.write(f"{f.nome} - Cargo: {f.cargo}")
-    else:
-        st.write("Nenhum funcionário cadastrado.")
-
-elif option=="Mesas":
-    st.subheader("Mesas")
-    if restaurante.mesas:
-        for mesa in restaurante.mesas:
-            status="Ocupada" if mesa.ocupada else "Livre"
-            st.write(f"Mesa {mesa.numero} - Capacidade: {mesa.capacidade} - {status}")
-    else:
-        st.write("Nenhuma mesa cadastrada.")
-
-elif option=="Cardápio":
-    st.subheader("Cardápio")
-    if restaurante.cardapio:
-        produtos=restaurante.cardapio.listar_produtos()
-        if produtos:
-            for prod in produtos:
-                st.write(prod)
-        else:
-            st.write("Nenhum produto cadastrado no cardápio.")
-    else:
-        st.write("Cardápio não definido.")
-
-elif option=="Pedidos":
-    st.subheader("Pedidos")
-    if restaurante.pedidos:
-        for pedido in restaurante.pedidos:
-            st.write(f"{pedido.nome} - Total: R$ {pedido.calcular_total():.2f}")
-            st.write("Itens:")
-            for item in pedido.listar_itens():
-                st.write(f"  - {item}")
-    else:
-        st.write("Nenhum pedido registrado.")
-
-elif option=="Reservas":
-    st.subheader("Reservas")
-    if restaurante.reservas:
-        for reserva in restaurante.reservas:
-            st.write(reserva.exibir_reserva())
-    else:
-        st.write("Nenhuma reserva efetuada.")
-
-elif option=="Promoções":
-    st.subheader("Promoções")
-    if restaurante.promocoes:
-        for promo in restaurante.promocoes:
-            st.write(f"{promo.descricao} - Desconto: {promo.desconto}% - Validade: {promo.dataValidade}")
-            st.write("Produtos:")
-            for prod in promo.listar_produtos():
-                st.write(f"  - {prod}")
-    else:
-        st.write("Nenhuma promoção cadastrada.")
-
-elif option=="Avaliações":
-    st.subheader("Avaliações")
-    if restaurante.avaliacoes:
-        for avaliacao in restaurante.avaliacoes:
-            st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}: {avaliacao.comentario}")
-    else:
-        st.write("Nenhuma avaliação registrada.")
-#
