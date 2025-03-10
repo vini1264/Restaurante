@@ -16,5 +16,5 @@ pip install streamlit
 Após instalar o Streamlit, use o comando abaixo para rodar o sistema:
 
 ```
-streamlit run view.py
+streamlit run "view.py"
 ```
