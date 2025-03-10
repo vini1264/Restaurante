@@ -25,7 +25,18 @@ if not restaurante.funcionarios:
     controller.cadastrar_funcionario(1, "Maria Souza", "987654321", "Garçom", 1500.0)
 
 if not restaurante.mesas:
-    controller.adicionar_mesa(1, 1, 4)
+    controller.adicionar_mesa(1, 10, 4)
+    controller.adicionar_mesa(2, 20, 4)
+    controller.adicionar_mesa(3, 30, 4)
+    controller.adicionar_mesa(4, 40, 4)
+    controller.adicionar_mesa(5, 50, 4)
+    controller.adicionar_mesa(6, 60, 4)
+    controller.adicionar_mesa(7, 70, 4)
+    controller.adicionar_mesa(8, 80, 4)
+    controller.adicionar_mesa(9, 90, 4)
+    controller.adicionar_mesa(10, 110, 8)
+    controller.adicionar_mesa(11, 210, 8)
+    controller.adicionar_mesa(12, 310, 8)
 
 if restaurante.cardapio is None:
     cardapio = controller.definir_cardapio(1, "Cardápio do Restaurante Exemplo")
@@ -99,52 +110,93 @@ if st.session_state["option"] == "Home":
         st.session_state["option"] = "Avaliações"
         st.rerun()
 
-elif st.session_state["option"] == "Clientes":
+# Dentro da lógica de navegação, na seção "Clientes":
+if st.session_state["option"] == "Clientes":
+    st.subheader("Clientes Cadastrados")
     # Formulário para cadastrar um novo cliente
     with st.form("cadastro_cliente"):
         st.subheader("Cadastrar Novo Cliente")
         id_cliente = st.number_input("ID do Cliente", min_value=1, step=1)
         nome_cliente = st.text_input("Nome do Cliente")
         telefone_cliente = st.text_input("Telefone do Cliente")
-
         submitted = st.form_submit_button("Cadastrar")
-
         if submitted:
-            st.write("Botão de cadastro clicado")
-            st.write(f"id_cliente: {id_cliente}, nome_cliente: {nome_cliente}, telefone_cliente: {telefone_cliente}")
             if id_cliente and nome_cliente and telefone_cliente:
-                st.write("Todos os campos foram preenchidos")
+                # Verifica se já existe um cliente com esse ID
                 if any(c.id == id_cliente for c in restaurante.clientes):
                     st.warning("Já existe um cliente com esse ID.")
                 else:
                     try:
-                        st.write("Cadastrando cliente...")
                         controller.cadastrar_cliente(id_cliente, nome_cliente, telefone_cliente)
                         st.success(f"Cliente {nome_cliente} cadastrado com sucesso!")
-                        st.write(f"Clientes antes do cadastro: {len(restaurante.clientes)}")
-                        restaurante.clientes.append(Cliente(id_cliente, nome_cliente, telefone_cliente))
-                        st.write(f"Clientes depois do cadastro: {len(restaurante.clientes)}")
-                        st.write("Recarregando a página...")
-                        st.rerun()  # Atualiza a página automaticamente após o cadastro
-                    except Exception as e:
+                    except Exception as e:  
                         st.error(f"Ocorreu um erro ao cadastrar o cliente: {e}")
             else:
                 st.error("Preencha todos os campos corretamente.")
-    st.subheader("Clientes Cadastrados")
+    
+    # Lista os clientes cadastrados
     for cliente in restaurante.clientes:
         st.write(cliente.get_info())
     st.write("Total de clientes cadastrados: ", len(restaurante.clientes))
 
+# Dentro da lógica de navegação, na seção Funcionários:
 elif st.session_state["option"] == "Funcionários":
     st.subheader("Funcionários")
-    for f in restaurante.funcionarios:
-        st.write(f"{f.nome} - Cargo: {f.cargo}")
 
+    # Formulário para cadastrar um novo funcionário
+    with st.form("cadastro_de_funcionario"):
+        st.subheader("Cadastrar Novo Funcionário")
+        id_funcionario = st.number_input("ID do Funcionário", min_value=1, step=1)
+        nome_funcionario = st.text_input("Nome do Funcionário:")
+        telefone_funcionario = st.text_input("Telefone do Funcionário:")
+        cargo_funcionario = st.text_input("Cargo do Funcionário:")
+        salario_funcionario = st.number_input("Salário do Funcionário", min_value=0.0, step=100.0)
+        submitted = st.form_submit_button("Cadastrar")
+        if submitted:
+            if id_funcionario and nome_funcionario and telefone_funcionario: # Verifica se já existe um funcionário com esse ID
+                if any(c.id == id_funcionario for c in restaurante.funcionarios):
+                    st.warning("Já existe um Funcionário com esse ID.")
+                else:
+                    try:
+                        controller.cadastrar_funcionario(id_funcionario, nome_funcionario, telefone_funcionario, cargo_funcionario, salario_funcionario)
+                        st.success(f"Funcionário {nome_funcionario} cadastrado com sucesso!")
+                    except Exception as e:  
+                        st.error(f"Ocorreu um erro ao cadastrar o funcionário: {e}")
+            else:
+                st.error("Preencha todos os campos corretamente.")
+    
+    # Lista dos funcionários cadastrados
+    st.subheader("Funcionários Cadastrados")
+    st.write("ID - Nome - Telefone - Cargo - Salário")
+    for funcionario in restaurante.funcionarios:
+        st.write(funcionario.get_info())
+    st.write("Total de funcionários cadastrados: ", len(restaurante.funcionarios))
+
+#Imagina que o local seria um restaurante fixo, então não seria necessário cadastrar mesas
 elif st.session_state["option"] == "Mesas":
     st.subheader("Mesas")
+
+    # Formulário para liberar uma mesa
+    with st.form("liberar_mesa"):
+        st.subheader("Liberar Mesa")
+        numero_mesa_liberar = st.number_input("Número da Mesa para Liberar", min_value=10, step=10)
+        submitted = st.form_submit_button("Liberar Mesa")
+        if submitted:
+            try:
+                mesa = next((m for m in restaurante.mesas if m.numero == numero_mesa_liberar), None)
+                if mesa:
+                    controller.liberar_mesa(numero_mesa_liberar)
+                    st.success(f"Mesa {numero_mesa_liberar} liberada com sucesso!")
+                else:
+                    st.error(f"Mesa {numero_mesa_liberar} não existe.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao liberar a mesa: {e}")
+
+    # Lista as mesas cadastradas
+    st.subheader("Mesas Cadastradas")
     for mesa in restaurante.mesas:
-        status = "Ocupada" if mesa.ocupada else "Livre"
-        st.write(f"Mesa {mesa.numero} - Capacidade: {mesa.capacidade} - {status}")
+        status = "Ocupada" if mesa.ocupada else "Reservada" if mesa.reservada else "Livre"
+        st.write(f"Mesa {mesa.numero} - Capacidade: {mesa.capacidade} - Status: {status}")
 
 elif st.session_state["option"] == "Cardápio":
     st.subheader("Cardápio")
@@ -154,6 +206,23 @@ elif st.session_state["option"] == "Cardápio":
 
 elif st.session_state["option"] == "Pedidos":
     st.subheader("Pedidos")
+
+    # Formulário para criar um pedido em uma mesa
+    with st.form("criar_pedido"):
+        st.subheader("Criar Pedido")
+        id_pedido = st.number_input("ID do Pedido", min_value=1, step=1)
+        id_cliente = st.number_input("ID do Cliente", min_value=1, step=1)
+        numero_mesa_pedido = st.number_input("Número da Mesa para o Pedido", min_value=1, step=1)
+        submitted = st.form_submit_button("Criar Pedido")
+        if submitted:
+            try:
+                cliente = next(c for c in restaurante.clientes if c.id == id_cliente)
+                controller.criar_pedido(id_pedido, cliente, numero_mesa_pedido)
+                st.success(f"Pedido {id_pedido} criado com sucesso na mesa {numero_mesa_pedido}!")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao criar o pedido: {e}")
+
+    # Lista os pedidos cadastrados
     for pedido in restaurante.pedidos:
         st.write(f"{pedido.nome} - Total: R$ {pedido.calcular_total():.2f}")
         for item in pedido.listar_itens():
@@ -161,6 +230,24 @@ elif st.session_state["option"] == "Pedidos":
 
 elif st.session_state["option"] == "Reservas":
     st.subheader("Reservas")
+
+    # Formulário para criar uma reserva em uma mesa
+    with st.form("criar_reserva"):
+        st.subheader("Criar Reserva")
+        id_reserva = st.number_input("ID da Reserva", min_value=1, step=1)
+        id_cliente_reserva = st.number_input("ID do Cliente", min_value=1, step=1)
+        numero_mesa_reserva = st.number_input("Número da Mesa para a Reserva", min_value=1, step=1)
+        data_hora_reserva = st.date_input("Data e Hora da Reserva")
+        submitted = st.form_submit_button("Criar Reserva")
+        if submitted:
+            try:
+                cliente = next(c for c in restaurante.clientes if c.id == id_cliente_reserva)
+                controller.criar_reserva(id_reserva, cliente, datetime.combine(data_hora_reserva, datetime.min.time()), numero_mesa_reserva)
+                st.success(f"Reserva {id_reserva} criada com sucesso na mesa {numero_mesa_reserva}!")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao criar a reserva: {e}")
+
+    # Lista as reservas cadastradas
     for reserva in restaurante.reservas:
         st.write(reserva.exibir_reserva())
 

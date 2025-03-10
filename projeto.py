@@ -16,7 +16,7 @@ class Cliente(EntidadeRestaurante):
         self.historicoPedidos=[]  # Lista de pedidos realizados
         self.reservas=[]          # Lista de reservas efetuadas
     def get_info(self):
-        return f"{self.nome}-{self.telefone}"
+        return f"Nome: {self.nome} - Telefone: {self.telefone}"
     
 class Funcionario(EntidadeRestaurante):
     def __init__(self, id, nome, telefone, cargo, salario):
@@ -25,14 +25,23 @@ class Funcionario(EntidadeRestaurante):
         self.cargo=cargo
         self.salario=salario
 
+    def get_info(self):
+        return f"{self.nome} - {self.telefone} - {self.cargo} - R$ {self.salario:.2f}"
+
 class Produto:
-    def __init__(self,nome,preco):
+    def __init__(self,nome,preco,tipo):
         self.nome=nome
         self.preco=preco
+        self.tipo=tipo
+
     def get_preco(self):
-        return self.preco # Retorna o preço do produto
+        return self.preco #retorna o preço do produto
+
     def get_nome(self):
-        return self.nome # Retorna o nome do produto
+        return self.nome #retorna o nome do produto
+
+    def get_tipo(self):
+        return self.tipo #retorna o tipo do produto
 
 class ItemPedido:
     def __init__(self,produto,quantidade):
@@ -75,13 +84,37 @@ class Mesa(EntidadeRestaurante):
         self.numero=numero
         self.capacidade=capacidade
         self.ocupada=False
-        self.pedidoAtual=None  # Pedido atual na mesa, se houver
+        self.reservada=False
+        self.pedidoAtual=None  #Pedido atual na mesa, se houver
+        self.reservaAtual=None  # Reserva atual na mesa, se houver
+
     def ocupar(self,pedido):
-        self.ocupada=True
-        self.pedidoAtual=pedido
+        if not self.ocupada and not self.reservada:
+            self.ocupada=True
+            self.pedidoAtual=pedido
+        else:
+            raise Exception("Mesa já está ocupada ou reservada")
+
+    def reservar(self, reserva):
+        if not self.ocupada and not self.reservada:
+            self.reservada = True
+            self.reservaAtual = reserva
+        else:
+            raise Exception("Mesa já está ocupada ou reservada")
+
     def liberar(self):
-        self.ocupada=False
-        self.pedidoAtual=None
+        if self.pedidoAtual is None and self.reservaAtual is None:
+            self.ocupada=False
+            self.reservada=False
+        else:
+            raise Exception("Mesa não pode ser liberada, pois há um pedido ou reserva ativa")
+
+    def verificar_reserva(self):
+        if self.reservaAtual:
+            tempo_reserva=datetime.now()-self.reservaAtual.data_hora
+            if tempo_reserva.total_seconds()>1800:  # 30 minutos
+                self.reservaAtual=None
+                self.reservada=False
 
 class Cardapio(EntidadeRestaurante):
     def __init__(self,id,descricao):
@@ -109,7 +142,7 @@ class Promocao(EntidadeRestaurante):
     def remover_produto(self, nome_produto):
         self.produtos=[p for p in self.produtos if p.get_nome()!=nome_produto]
     def listar_produtos(self):
-        return [f"{p.get_nome()} - R$ {p.get_preco():.2f}" for p in self.produtos]
+        return [f"{p.get_nome()} - R$ {p.get_preco()::.2f}" for p in self.produtos]
 
 # Classe Avaliacao
 class Avaliacao(EntidadeRestaurante):
@@ -130,6 +163,8 @@ class Restaurante(EntidadeRestaurante):
         self.clientes=[]      # Lista de Clientes
         self.cardapio=None    # Cardapio do restaurante
         self.reservas=[]      # Lista de Reservas
+        self.promocoes=[]     # Lista de Promocoes
+        self.avaliacoes=[]    # Lista de Avaliacoes
     def cadastrar_cliente(self,cliente):
         self.clientes.append(cliente)
     def cadastrar_funcionario(self,funcionario):
@@ -140,6 +175,12 @@ class Restaurante(EntidadeRestaurante):
         self.cardapio=cardapio
     def criar_pedido(self, pedido):
         self.pedidos.append(pedido)
+    def criar_reserva(self, reserva):
+        self.reservas.append(reserva)
+    def criar_promocao(self, promocao):
+        self.promocoes.append(promocao)
+    def adicionar_avaliacao(self, avaliacao):
+        self.avaliacoes.append(avaliacao)
 
 #Controller simples, organizar melhor depois
 #######################################################
@@ -151,65 +192,63 @@ class RestauranteController:
     def cadastrar_cliente(self, id_cliente, nome_cliente, telefone_cliente):
         try:
             cliente=Cliente(id_cliente, nome_cliente, telefone_cliente)
-            self.restaurante.clientes.append(cliente)
+            self.restaurante.cadastrar_cliente(cliente)
         except Exception as e:
             raise e
 
     def cadastrar_funcionario(self, id, nome, telefone, cargo, salario):
-        funcionario=Funcionario(id, nome, telefone, cargo, salario)
-        self.restaurante.cadastrar_funcionario(funcionario)
-        return funcionario
+        try:
+            funcionario=Funcionario(id, nome, telefone, cargo, salario)
+            self.restaurante.cadastrar_funcionario(funcionario)
+        except Exception as e:
+            raise e
 
     def adicionar_mesa(self, id, numero, capacidade):
-        mesa=Mesa(id, numero, capacidade)
-        self.restaurante.adicionar_mesa(mesa)
-        return mesa
+        try:
+            mesa=Mesa(id, numero, capacidade)
+            self.restaurante.adicionar_mesa(mesa)
+        except Exception as e:
+            raise e
 
     def definir_cardapio(self, id, descricao):
-        cardapio=Cardapio(id, descricao)
-        self.restaurante.definir_cardapio(cardapio)
-        return cardapio
+        try:
+            cardapio=Cardapio(id, descricao)
+            self.restaurante.definir_cardapio(cardapio)
+            return cardapio
+        except Exception as e:
+            raise e
 
-    def criar_pedido(self, id, cliente):
-        pedido=Pedido(id, cliente)
-        self.restaurante.criar_pedido(pedido)
-        return pedido
+    def criar_pedido(self, id, cliente, numero_mesa):
+        try:
+            pedido=Pedido(id, cliente)
+            mesa=self.restaurante.mesas[numero_mesa - 1]
+            mesa.ocupar(pedido)
+            self.restaurante.criar_pedido(pedido)
+        except Exception as e:
+            raise e
 
-    def criar_reserva(self, id, cliente, data_hora):
-        reserva=Reserva(id, cliente, data_hora)
-        self.restaurante.criar_reserva(reserva)
-        return reserva
+    def criar_reserva(self, id, cliente, data_hora, numero_mesa):
+        try:
+            reserva=Reserva(id, cliente, data_hora)
+            mesa=self.restaurante.mesas[numero_mesa - 1]
+            mesa.reservar(reserva)
+            self.restaurante.criar_reserva(reserva)
+        except Exception as e:
+            raise e
 
-    def criar_promocao(self, id, descricao, desconto, dataValidade):
-        promocao=Promocao(id, descricao, desconto, dataValidade)
-        self.restaurante.criar_promocao(promocao)
-        return promocao
+    def liberar_mesa(self, numero_mesa):
+        try:
+            mesa = next((m for m in self.restaurante.mesas if m.numero == numero_mesa), None)
+            if mesa:
+                mesa.liberar()
+            else:
+                raise Exception(f"Mesa {numero_mesa} não encontrada.")
+        except Exception as e:
+            raise e
 
-    def adicionar_avaliacao(self, id, cliente, nota, comentario):
-        avaliacao=Avaliacao(id, cliente, nota, comentario)
-        self.restaurante.adicionar_avaliacao(avaliacao)
-        return avaliacao
-
-#VIEW
-################################################
-# Criação do objeto Restaurante central
-restaurante=Restaurante(1, "Restaurante Exemplo", "Rua Principal, 123")
-controller=RestauranteController(restaurante)
-
-# Configuração inicial de dados para demonstração (caso ainda não existam)
-if not restaurante.clientes:
-    controller.cadastrar_cliente(1, "João Silva", "123456789")
-
-if not restaurante.funcionarios:
-    controller.cadastrar_funcionario(1, "Maria Souza", "987654321", "Garçom", 1500.0)
-
-if not restaurante.mesas:
-    controller.adicionar_mesa(1, 1, 4)
-
-if restaurante.cardapio is None:
-    cardapio=controller.definir_cardapio(1, "Cardápio do Restaurante Exemplo")
-    # Adiciona alguns produtos ao cardápio
-    produto1=Produto("Pizza", 35.0)
-    produto2=Produto("Refrigerante", 5.0)
-    cardapio.adicionar_produto(produto1)
-    cardapio.adicionar_produto(produto2)
+    def adicionar_produto_ao_cardapio(self, nome, preco, tipo):
+        try:
+            produto = Produto(nome, preco, tipo)
+            self.restaurante.cardapio.adicionar_produto(produto)
+        except Exception as e:
+            raise e
