@@ -200,9 +200,37 @@ elif st.session_state["option"] == "Mesas":
 
 elif st.session_state["option"] == "Cardápio":
     st.subheader("Cardápio")
+
+    # Formulário para adicionar um novo produto ao cardápio
+    with st.form("adicionar_produto"):
+        st.subheader("Adicionar Novo Produto")
+        nome_produto = st.text_input("Nome do Produto")
+        preco_produto = st.number_input("Preço do Produto", min_value=0.0, step=0.01)
+        tipo_produto = st.selectbox("Tipo do Produto", ["Comida", "Bebida"])
+        submitted = st.form_submit_button("Adicionar")
+        if submitted:
+            if nome_produto and preco_produto:
+                try:
+                    controller.adicionar_produto_ao_cardapio(nome_produto, preco_produto, tipo_produto)
+                    st.success(f"Produto {nome_produto} adicionado com sucesso!")
+                except Exception as e:
+                    st.error(f"Ocorreu um erro ao adicionar o produto: {e}")
+            else:
+                st.error("Preencha todos os campos corretamente.")
+
+    # Lista os produtos cadastrados no cardápio
+    st.subheader("Produtos no Cardápio")
     if restaurante.cardapio:
-        for prod in restaurante.cardapio.listar_produtos():
-            st.write(prod)
+        comidas = [prod for prod in restaurante.cardapio.listar_produtos() if prod.get_tipo() == "Comida"]
+        bebidas = [prod for prod in restaurante.cardapio.listar_produtos() if prod.get_tipo() == "Bebida"]
+
+        st.write("**Comidas**")
+        for comida in comidas:
+            st.write(f"{comida.get_nome()} - R$ {comida.get_preco():.2f}")
+
+        st.write("**Bebidas**")
+        for bebida in bebidas:
+            st.write(f"{bebida.get_nome()} - R$ {bebida.get_preco():.2f}")
 
 elif st.session_state["option"] == "Pedidos":
     st.subheader("Pedidos")
