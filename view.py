@@ -292,3 +292,42 @@ elif st.session_state["option"] == "Avaliações":
     if hasattr(restaurante, 'avaliacoes'):
         for avaliacao in restaurante.avaliacoes:
             st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}: {avaliacao.comentario}")
+
+######################################
+# Exibição de Promoções
+######################################
+elif st.session_state["option"] == "Promoções":
+    st.subheader("Promoções Ativas")
+    if restaurante.promocoes:
+        for promo in restaurante.promocoes:
+            st.write(f"Promoção: {promo.descricao}")
+            st.write(f"Desconto: {promo.desconto}%")
+            st.write(f"Válido até: {promo.dataValidade}")
+            produtos = ', '.join([prod.nome for prod in promo.listar_produtos()])
+            st.write(f"Produtos em promoção: {produtos}")
+            st.write("---")
+    else:
+        st.write("Nenhuma promoção ativa no momento.")
+
+######################################
+# Exibição de Avaliações
+######################################
+elif st.session_state["option"] == "Avaliações":
+    st.subheader("Avaliações dos Clientes")
+    if restaurante.avaliacoes:
+        for avaliacao in restaurante.avaliacoes:
+            st.write(f"{avaliacao.cliente.nome} avaliou com nota {avaliacao.nota}")
+            st.write(f"Comentário: {avaliacao.comentario}")
+            st.write("---")
+    else:
+        st.write("Ainda não há avaliações cadastradas.")
+
+######################################
+# Rodapé
+######################################
+st.sidebar.markdown("---")
+st.sidebar.write("Sistema de gerenciamento de restaurante desenvolvido com Streamlit.")
+st.sidebar.write("Criado para facilitar a administração de clientes, funcionários, mesas, pedidos e mais.")
+
+st.write("---")
+st.write("© 2025 Restaurante Cachorro Belga. Todos os direitos reservados.")
