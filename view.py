@@ -256,26 +256,6 @@ elif st.session_state["option"] == "Pedidos":
         for item in pedido.listar_itens():
             st.write(f"  - {item}")
 
-class Cliente:
-    def __init__(self, id, nome):
-        self.id = id
-        self.nome = nome
-
-class Mesa:
-    def __init__(self, numero):
-        self.numero = numero
-
-class Avaliacao:
-    def __init__(self, cliente, nota, comentario):
-        self.cliente = cliente
-        self.nota = nota
-        self.comentario = comentario
-
-class Reserva:
-    def __init__(self, cliente, mesa, data):
-        self.cliente = cliente
-        self.mesa = mesa
-        self.data = data
 
 # Inicializando o estado da aplicação
 if "avaliacoes" not in st.session_state:
@@ -290,9 +270,20 @@ if "clientes" not in st.session_state:
 if "mesas" not in st.session_state:
     st.session_state["mesas"] = [Mesa(1), Mesa(2)]  # Exemplo de mesas
 
-######################################
+import streamlit as st
+from datetime import datetime
+
+# Verifica se as variáveis estão no session_state
+if "clientes" not in st.session_state:
+    st.session_state["clientes"] = []  # Lista de clientes vazia
+if "mesas" not in st.session_state:
+    st.session_state["mesas"] = []  # Lista de mesas vazia
+if "avaliacoes" not in st.session_state:
+    st.session_state["avaliacoes"] = []  # Lista de avaliações vazia
+if "reservas" not in st.session_state:
+    st.session_state["reservas"] = []  # Lista de reservas vazia
+
 # Lógica de navegação - Avaliações
-######################################
 if st.session_state["option"] == "Avaliações":
     st.subheader("Avaliações")
 
@@ -304,9 +295,11 @@ if st.session_state["option"] == "Avaliações":
         comentario = st.text_area("Comentário")
         submitted = st.form_submit_button("Enviar Avaliação")
         if submitted:
+            # Buscar cliente a partir do ID
             cliente = next((c for c in st.session_state["clientes"] if c.id == id_cliente), None)
             if cliente:
                 try:
+                    # Criar a avaliação e adicionar no session_state
                     avaliacao = Avaliacao(cliente, nota, comentario)
                     st.session_state["avaliacoes"].append(avaliacao)
                     st.success("Avaliação registrada com sucesso!")
@@ -337,9 +330,7 @@ if st.session_state["option"] == "Avaliações":
                 st.session_state["avaliacoes"].pop(i)
                 st.success(f"Avaliação de {avaliacao.cliente.nome} excluída com sucesso!")
 
-######################################
 # Lógica de navegação - Reservas
-######################################
 if st.session_state["option"] == "Reservas":
     st.subheader("Reservas")
 
@@ -352,10 +343,12 @@ if st.session_state["option"] == "Reservas":
         hora_reserva = st.time_input("Hora da Reserva")
         submitted = st.form_submit_button("Reservar")
         if submitted:
+            # Buscar cliente e mesa a partir dos IDs
             cliente = next((c for c in st.session_state["clientes"] if c.id == id_cliente), None)
             mesa = next((m for m in st.session_state["mesas"] if m.numero == id_mesa), None)
             if cliente and mesa:
                 try:
+                    # Criar a reserva e adicionar no session_state
                     reserva = Reserva(cliente, mesa, datetime.combine(data_reserva, hora_reserva))
                     st.session_state["reservas"].append(reserva)
                     st.success("Reserva realizada com sucesso!")
@@ -384,6 +377,51 @@ if st.session_state["option"] == "Reservas":
             if st.button(f"Excluir {i}"):
                 st.session_state["reservas"].pop(i)
                 st.success(f"Reserva de {reserva.cliente.nome} excluída com sucesso!")
+
+# Lógica de navegação - Promoções
+if st.session_state["option"] == "Promoções":
+    st.subheader("Promoções")
+
+    # Formulário para cadastrar uma promoção
+    with st.form("cadastro_promocao"):
+        st.subheader("Cadastrar Nova Promoção")
+        titulo = st.text_input("Título da Promoção")
+        descricao = st.text_area("Descrição da Promoção")
+        desconto = st.number_input("Desconto (%)", min_value=0, max_value=100, step=1)
+        submitted = st.form_submit_button("Cadastrar Promoção")
+        if submitted:
+            try:
+                # Criar a promoção e adicionar no session_state
+                promocao = Promocao(titulo, descricao, desconto)
+                st.session_state["promocoes"].append(promocao)
+                st.success("Promoção cadastrada com sucesso!")
+            except Exception as e:
+                st.error(f"Erro ao cadastrar promoção: {e}")
+
+    # Lista promoções cadastradas
+    st.subheader("Promoções Cadastradas")
+    for i, promocao in enumerate(st.session_state["promocoes"]):
+        st.write(f"**{promocao.titulo}**: {promocao.descricao} - Desconto: {promocao.desconto}%")
+
+        # Editar e excluir promoção
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button(f"Editar {i}"):
+                # Formulário de edição
+                new_titulo = st.text_input(f"Novo título para {promocao.titulo}", value=promocao.titulo)
+                new_descricao = st.text_area(f"Nova descrição para {promocao.titulo}", value=promocao.descricao)
+                new_desconto = st.number_input(f"Novo desconto para {promocao.titulo}", min_value=0, max_value=100, step=1, value=promocao.desconto)
+                if st.button("Confirmar edição"):
+                    promocao.titulo = new_titulo
+                    promocao.descricao = new_descricao
+                    promocao.desconto = new_desconto
+                    st.success("Promoção editada com sucesso!")
+
+        with col2:
+            if st.button(f"Excluir {i}"):
+                st.session_state["promocoes"].pop(i)
+                st.success(f"Promoção {promocao.titulo} excluída com sucesso!")
+
 
 ######################################
 # Rodapé
