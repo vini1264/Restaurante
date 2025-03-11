@@ -57,19 +57,16 @@ class Pedido(EntidadeRestaurante):
     def __init__(self, id, cliente):
         super().__init__(id, f"Pedido_{id}")
         self.cliente = cliente
-        self.itens = []  # Lista de ItemPedido
+        self.itens = []
 
-    def adicionar_item(self, produto, quantidade):
-        self.itens.append(ItemPedido(produto, quantidade))
-
-    def remover_item(self, nome_produto):
-        self.itens = [item for item in self.itens if item.produto.get_nome() != nome_produto]
-
-    def calcular_total(self):
-        return sum(item.calcular_subtotal() for item in self.itens)
+    def adicionar_item(self, produto):
+        self.itens.append(produto)
 
     def listar_itens(self):
-        return [f"{item.produto.get_nome()} - {item.quantidade} unidades - Subtotal: R$ {item.calcular_subtotal():.2f}" for item in self.itens]
+        return [f"{item.get_nome()} - R$ {item.get_preco():.2f}" for item in self.itens]
+
+    def calcular_total(self):
+        return sum(item.get_preco() for item in self.itens)
 
 # Classe Reserva atualizada para incluir a mesa
 class Reserva(EntidadeRestaurante):
@@ -239,12 +236,17 @@ class RestauranteController:
         return cardapio
 
     def criar_pedido(self, id, cliente, numero_mesa):
-        pedido = Pedido(id, cliente)
-        mesa = next((m for m in self.restaurante.mesas if m.numero == numero_mesa), None)
-        if mesa is None:
-            raise Exception("Mesa não encontrada.")
-        mesa.ocupar(pedido)
-        self.restaurante.criar_pedido(pedido)
+        try:
+            pedido = Pedido(id, cliente)
+            mesa = next((m for m in self.restaurante.mesas if m.numero == numero_mesa), None)
+            if mesa:
+                mesa.ocupar(pedido)
+                self.restaurante.pedidos.append(pedido)
+                return pedido
+            else:
+                raise Exception(f"Mesa {numero_mesa} não encontrada.")
+        except Exception as e:
+            raise e
 
     def criar_reserva(self, id, cliente, data_hora, numero_mesa):
         mesa = next((m for m in self.restaurante.mesas if m.numero == numero_mesa), None)

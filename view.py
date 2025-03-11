@@ -53,7 +53,7 @@ option_index = paginas.index(st.session_state["option"])
 option = st.sidebar.selectbox("Selecione uma opção:", paginas, index=option_index)
 if option != st.session_state["option"]:
     st.session_state["option"] = option
-    st.stop()  # Substitui o st.experimental_rerun()
+    st.rerun()
 
 if st.session_state["option"] == "Home":
     st.title("Sistema de Restaurante")
@@ -63,42 +63,42 @@ if st.session_state["option"] == "Home":
     st.image("https://blog.artdescaves.com.br/hubfs/blog/6-dicas-para-agradar-os-clientes-do-seu-restaurante.jpg")
     if st.button("Clientes"):
         st.session_state["option"] = "Clientes"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://www.menucontrol.com.br/wp-content/uploads/2022/05/group-hotel-staffs-standing-kitchen-scaled-1.jpg")
     if st.button("Funcionários"):
         st.session_state["option"] = "Funcionários"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://www.housecustomize.com/wp-content/uploads/2023/08/02-2-64ed9ce0773f5-1024x758.webp")
     if st.button("Mesas"):
         st.session_state["option"] = "Mesas"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://www.tribunapr.com.br/wp-content/uploads/2020/01/30161957/CARD%C3%81PIO-TECNICOPIAS-970x550.jpg")
     if st.button("Cardápio"):
         st.session_state["option"] = "Cardápio"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://img.elo7.com.br/product/zoom/502C0B7/bloco-de-pedidos-para-restaurantes-empresa.jpg")
     if st.button("Pedidos"):
         st.session_state["option"] = "Pedidos"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://cms-bomgourmet.s3.amazonaws.com/bomgourmet%2F2021%2F06%2F11152136%2Fmesa-reservada-foto-bigstock.jpg")
     if st.button("Reservas"):
         st.session_state["option"] = "Reservas"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://img.cdndsgni.com/preview/10034124.jpg")
     if st.button("Promoções"):
         st.session_state["option"] = "Promoções"
-        st.experimental_rerun()
+        st.rerun()
 
     st.image("https://static.vecteezy.com/ti/vetor-gratis/t1/11802277-modelo-de-avaliacao-de-restaurante-ilustracao-plana-de-desenho-animado-desenhado-a-mao-com-feedback-do-cliente-estrela-de-taxa-opiniao-de-especialistas-e-pesquisa-on-line-vetor.jpg")
     if st.button("Avaliações"):
         st.session_state["option"] = "Avaliações"
-        st.experimental_rerun()
+        st.rerun()
 
 elif st.session_state["option"] == "Clientes":
     st.subheader("Clientes Cadastrados")
@@ -197,25 +197,36 @@ elif st.session_state["option"] == "Cardápio":
             st.write(f"{comida.get_nome()} - R$ {comida.get_preco():.2f}")
         st.write("**Bebidas**")
         for bebida in bebidas:
-            st.write(f"{bebida.get_nome()} - R$ {bebida.get_preco():.2f}")
+            st.write(f"{bebida.get_nome()} - R$ {bebida.get_preco()::.2f}")
 
 elif st.session_state["option"] == "Pedidos":
     st.subheader("Pedidos")
+
+    # Formulário para criar um pedido em uma mesa
     with st.form("criar_pedido"):
         st.subheader("Criar Pedido")
         id_pedido = st.number_input("ID do Pedido", min_value=1, step=1)
         id_cliente = st.number_input("ID do Cliente", min_value=1, step=1)
         numero_mesa_pedido = st.number_input("Número da Mesa para o Pedido", min_value=1, step=1)
+        
+        st.subheader("Selecione os Produtos")
+        produtos_disponiveis = [f"{produto.get_nome()} - R$ {produto.get_preco():.2f}" for produto in restaurante.cardapio.listar_produtos()]
+        produtos_selecionados = st.multiselect("Produtos", produtos_disponiveis)
+        
         submitted = st.form_submit_button("Criar Pedido")
         if submitted:
             try:
                 cliente = next(c for c in restaurante.clientes if c.id == id_cliente)
-                controller.criar_pedido(id_pedido, cliente, numero_mesa_pedido)
+                pedido = controller.criar_pedido(id_pedido, cliente, numero_mesa_pedido)
+                for produto_str in produtos_selecionados:
+                    nome_produto = produto_str.split(" - ")[0]
+                    produto = next(p for p in restaurante.cardapio.listar_produtos() if p.get_nome() == nome_produto)
+                    pedido.adicionar_item(produto)
                 st.success(f"Pedido {id_pedido} criado com sucesso na mesa {numero_mesa_pedido}!")
-                controller.salvar_dados()
             except Exception as e:
                 st.error(f"Ocorreu um erro ao criar o pedido: {e}")
-    
+
+    # Lista os pedidos cadastrados
     for pedido in restaurante.pedidos:
         st.write(f"{pedido.nome} - Total: R$ {pedido.calcular_total():.2f}")
         for item in pedido.listar_itens():
